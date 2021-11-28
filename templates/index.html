@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Family Budget</title>
+</head>
+<body>
+    <h1>Family Budget</h1>
+    <form>
+    <label for="log_username">Username:</label>
+    <input type="text" id="log_username">
+    <label for="log_password">Password:</label>
+    <input type="password" id="log_password"><br>
+    <button type="button" onclick="login()">Login</button>
+    </form>
+    <form>
+    <label for="reg_username">Username:</label>
+    <input type="text" id="reg_username">
+    <label for="reg_password">Password:</label>
+    <input type="password" id="reg_password"><br>
+    <button type="button" onclick="register()">Registration</button>
+    </form>
+    <br>
+    <div id="budgets">
+        <div id="message"></div>
+        <br>
+        <div id="get_budgets"></div>
+    </div>
+    <script src="{{ url_for('static', path='/main.js') }}"></script>
+</body>
+</html>

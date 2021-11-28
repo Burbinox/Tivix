@@ -7,11 +7,14 @@ from utils import hash_password, create_session_token
 from pydantic import BaseModel
 from typing import List
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 app.SECRETKET = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley"
 
 models.Base.metadata.create_all(bind=engine)
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def get_db():
@@ -20,9 +23,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/app", response_class=HTMLResponse, include_in_schema=False)
@@ -73,7 +73,6 @@ def get_budgets(request: Request, response: Response, db: Session = Depends(get_
     user = db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
     if user:
         budgets = db.query(models.Budget).filter(models.Budget.owner == user.id).all()
-        print(budgets)
         return budgets
     else:
         response.status_code = status.HTTP_401_UNAUTHORIZED
