@@ -1,12 +1,13 @@
-from fastapi import FastAPI, Depends, Request, Response, status
-from database import SessionLocal, engine
-import models
-from sqlalchemy.orm import Session
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.responses import HTMLResponse
-from utils import hash_password, create_session_token
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+import models
+from database import SessionLocal, engine
 from pydantic_models import Budget, ShareBudget
+from utils import create_session_token, hash_password
 
 app = FastAPI()
 app.SECRETKET = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley"
@@ -31,14 +32,16 @@ def test(request: Request):
 
 @app.get("/", include_in_schema=False)
 async def root():
-    return HTMLResponse("""<h1>This is Family budget app</h1>
+    return HTMLResponse(
+        """<h1>This is Family budget app</h1>
     <p>For doumentation go to <a href="/docs">Docks</a></p>
     <p>or go to the <a href="/app">app</a> page</p>  
-    """)
+    """
+    )
 
 
 @app.post("/register")
-def registration(username: str, password: str, response: Response,  db: Session = Depends(get_db)):
+def registration(username: str, password: str, response: Response, db: Session = Depends(get_db)):
     check_if_user_already_exist = db.query(models.User).filter(models.User.username == username).first()
     if check_if_user_already_exist:
         response.status_code = status.HTTP_400_BAD_REQUEST
@@ -54,7 +57,7 @@ def registration(username: str, password: str, response: Response,  db: Session 
 
 
 @app.post("/login")
-def login(username: str, password: str, response: Response,  db: Session = Depends(get_db)):
+def login(username: str, password: str, response: Response, db: Session = Depends(get_db)):
     exising_user = db.query(models.User).filter(models.User.username == username).first()
     hassed_password = hash_password(password, app.SECRETKET)
     check_if_password_correct = db.query(models.User).filter(models.User.password == hassed_password).first()
@@ -80,7 +83,9 @@ def get_budgets(request: Request, response: Response, db: Session = Depends(get_
 
 @app.post("/budget/{budget_id}")
 def post_budgets(budget_id, budget: Budget, request: Request, response: Response, db: Session = Depends(get_db)):
-    authorized_user = db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
+    authorized_user = (
+        db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
+    )
     exist_budget = db.query(models.Budget).filter(models.Budget.id == budget_id).first()
     owner = db.query(models.Budget).filter(models.Budget.owner == authorized_user.id).first()
     if authorized_user:
@@ -95,8 +100,9 @@ def post_budgets(budget_id, budget: Budget, request: Request, response: Response
                 response.status_code = status.HTTP_401_UNAUTHORIZED
                 return {"You are not the owner of this budget"}
         else:
-            db_budget = models.Budget(id=budget_id, owner=authorized_user.id, income=budget.income,
-                                      outcome=budget.outcome)
+            db_budget = models.Budget(
+                id=budget_id, owner=authorized_user.id, income=budget.income, outcome=budget.outcome
+            )
             db.add(db_budget)
             db.commit()
             response.status_code = status.HTTP_201_CREATED
@@ -108,7 +114,9 @@ def post_budgets(budget_id, budget: Budget, request: Request, response: Response
 
 @app.get("/share")
 def get_shares(request: Request, response: Response, db: Session = Depends(get_db)):
-    authorized_user = db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
+    authorized_user = (
+        db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
+    )
     if authorized_user:
         users_shares = db.query(models.Share).filter(models.Share.user == authorized_user.id).all()
         all_budgets = []
@@ -122,16 +130,26 @@ def get_shares(request: Request, response: Response, db: Session = Depends(get_d
 
 @app.post("/share")
 def share_budget(share_info: ShareBudget, request: Request, response: Response, db: Session = Depends(get_db)):
-    authorized_user = db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
+    authorized_user = (
+        db.query(models.User).filter(models.User.session_id == request.cookies.get("session_token")).first()
+    )
     if authorized_user:
         for user in share_info.share_target_users:
             if_user_exist = db.query(models.User).filter(models.User.id == user).first()
             if if_user_exist:
                 for budget in share_info.budgets_id:
                     if db.get(models.Budget, budget):
-                        owner = db.query(models.Budget).filter(models.Budget.id == budget, models.Budget.owner == authorized_user.id).first()
+                        owner = (
+                            db.query(models.Budget)
+                            .filter(models.Budget.id == budget, models.Budget.owner == authorized_user.id)
+                            .first()
+                        )
                         if owner:
-                            share_exist = db.query(models.Share).filter(models.Share.user == user, models.Share.budget == budget).first()
+                            share_exist = (
+                                db.query(models.Share)
+                                .filter(models.Share.user == user, models.Share.budget == budget)
+                                .first()
+                            )
                             if share_exist:
                                 response.status_code = status.HTTP_400_BAD_REQUEST
                                 return {f"Bucket with ID: {budget} is already shared to user: {user}"}
