@@ -14,7 +14,7 @@ app.SECRETKET = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstl
 
 models.Base.metadata.create_all(bind=engine)
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def get_db():
@@ -52,6 +52,13 @@ def registration(username: str, password: str, response: Response,  db: Session 
     db.commit()
     response.status_code = status.HTTP_201_CREATED
     return {"User created! You can login now"}
+
+
+@app.get("/dupa")
+def testa(db: Session = Depends(get_db)):
+    print(db)
+    a = db.query(models.User).filter().first()
+    return a
 
 
 @app.post("/login")
