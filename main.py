@@ -4,17 +4,16 @@ import models
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
 from utils import hash_password, create_session_token
-from pydantic import BaseModel
-from typing import List
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from pydantic_models import Budget, ShareBudget
 
 app = FastAPI()
 app.SECRETKET = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley"
 
 models.Base.metadata.create_all(bind=engine)
 templates = Jinja2Templates(directory="templates")
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def get_db():
@@ -54,13 +53,6 @@ def registration(username: str, password: str, response: Response,  db: Session 
     return {"User created! You can login now"}
 
 
-@app.get("/dupa")
-def testa(db: Session = Depends(get_db)):
-    print(db)
-    a = db.query(models.User).filter().first()
-    return a
-
-
 @app.post("/login")
 def login(username: str, password: str, response: Response,  db: Session = Depends(get_db)):
     exising_user = db.query(models.User).filter(models.User.username == username).first()
@@ -84,11 +76,6 @@ def get_budgets(request: Request, response: Response, db: Session = Depends(get_
     else:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"Unauthorized user"}
-
-
-class Budget(BaseModel):
-    income: dict
-    outcome: dict
 
 
 @app.post("/budget/{budget_id}")
@@ -131,11 +118,6 @@ def get_shares(request: Request, response: Response, db: Session = Depends(get_d
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return {"Unauthorized user"}
     return all_budgets
-
-
-class ShareBudget(BaseModel):
-    budgets_id: List[int]
-    share_target_users: List[int]
 
 
 @app.post("/share")
